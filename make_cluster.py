@@ -88,14 +88,11 @@ def write_names_file(filename,clustername,domainname):
     f.write(yaml.dump(data,default_flow_style=False,explicit_start=True))
     f.close()
 
-def check_roles(roles_path):
-    pass
-
 def check_ansible_config():
     config=ConfigParser.ConfigParser()
     configpath=os.path.expanduser('~/.ansible.cfg')
     changed=False
-    values={'remote_tmp':'/tmp/.ansible/tmp','roles_path':'~/ansible_cluster_in_a_box/roles/','host_key_checking':'False'}
+    values={'remote_tmp':'/tmp/.ansible/tmp','host_key_checking':'False'}
     try:
         config.read([configpath])
     except Exception as e:
