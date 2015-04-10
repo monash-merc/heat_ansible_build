@@ -143,10 +143,13 @@ def write_passwd_file(clustername,required_passwords,filename):
 def create_or_update_stack(clustername,hot_file):
     p = subprocess.Popen(['heat','stack-list'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     (stdout,stderr) = p.communicate()
+    print "looking for stack %s"%clustername
     if ' %s '%clustername in stdout:
         updating = True
+        print "stack found, updating"
     else:
         updating = False
+        print "stack not found, creating"
     if updating:
         p = subprocess.Popen(['heat','stack-update',clustername,'-r','-f',hot_file],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         (stdout,stderr) = p.communicate()
@@ -202,12 +205,10 @@ def run_ansible(inventory,playbook,passwd_file,ldapConfig_file,vars_file,names_f
 
 
 def main():
-    reqpasswd={'mungekey':32,'sqlrootPasswd':8,'slurmdb_passwd':8}
     if len(sys.argv) >1 :
-        clustername = sys.argv[1]
-        print clustername
+        stackname = sys.argv[1]
     else:
-        clustername=None
+        stackname=None
     try:
         config=ConfigParser.ConfigParser()
         configpath=os.path.expanduser('./cluster_config.cfg')
@@ -218,14 +219,19 @@ def main():
             pass
         passwd_file=config.get('defaults','passwd_file')
         clustername=config.get('defaults','name')
+        if stackname == None:
+            stackname=clustername
         domain=config.get('defaults','domain')
         vars_file=config.get('defaults','vars')
         names_file=config.get('defaults','names_file')
         hot_file=config.get('defaults','hot_file')
         playbook=config.get('defaults','playbook')
+        reqpasswdstr = config.get('defaults','reqpasswd')
+        import json
+        reqpasswd = json.loads(reqpasswdstr)
         try:
-            ldapConfig_file=config.get('defaults','domain')
-            ldapConfig_file = os.path.abspath(ldapConfig_file)
+            ldapConfig_file=config.get('defaults','ldapconfig_file')
+            ldapConfig_file=os.path.abspath(ldapConfig_file)
         except:
             ldapConfig_file=None
 
@@ -244,9 +250,9 @@ def main():
             check_ldap_config(ldapConfig_file)
         write_names_file(names_file,clustername,domain)
         write_passwd_file(clustername,reqpasswd,passwd_file)
-        create_or_update_stack(clustername,hot_file)
-        link_inventory(clustername)
-        wait_for_cluster(clustername)
+        create_or_update_stack(stackname,hot_file)
+        link_inventory(stackname)
+        wait_for_cluster(stackname)
         print("extra wait")
         time.sleep(3)
         run_ansible(os.path.abspath(clustername),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
