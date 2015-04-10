@@ -183,7 +183,7 @@ def readpipe(pipe):
 def link_inventory(clustername):
     p = subprocess.Popen(['rm','-rf',clustername])
     p.communicate()
-    p = subprocess.Popen(['ln','-s',os.path.expanduser('~/ansible_cluster_in_a_box/dynamicInventory'),clustername],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(['ln','-s',os.path.expanduser('./ansible_cluster_in_a_box/dynamicInventory'),clustername],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     (stdout,stderr)=p.communicate()
     if stderr!=None and stderr!="":
         print("linking the inventory failed for some reason")
