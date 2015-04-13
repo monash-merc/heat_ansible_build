@@ -255,7 +255,7 @@ def main():
         wait_for_cluster(stackname)
         print("extra wait")
         time.sleep(3)
-        run_ansible(os.path.abspath(clustername),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
+        run_ansible(os.path.abspath(stackname),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
     except Exception as e:
         print traceback.format_exc()
         print e
