@@ -7,7 +7,7 @@ sudo apt-get -y install python-pip
 sudo apt-get -y install python-dev
 ORIG_PWD=`pwd`
 cd ~
-git clone https://github.com/ansible/ansible.git
+git clone --recurse https://github.com/ansible/ansible.git
 cd ansible
 sudo python setup.py install
 cd ~
