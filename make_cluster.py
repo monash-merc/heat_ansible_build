@@ -136,7 +136,7 @@ def write_passwd_file(clustername,required_passwords,filename):
             changed=True
     if changed:
         f=open(pwpath,'w+')
-        f.write(yaml.dump(data,default_flow_style=False,explicit_start=True))
+        f.write(yaml.safe_dump(data,default_flow_style=False,explicit_start=True))
         f.close()
 
 
