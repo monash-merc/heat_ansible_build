@@ -9,6 +9,8 @@ ORIG_PWD=`pwd`
 cd ~
 git clone --recurse https://github.com/ansible/ansible.git
 cd ansible
+git checkout stable-1.9
+git submodule update
 sudo python setup.py install
 cd ~
 git clone https://github.com/openstack-dev/pbr.git
