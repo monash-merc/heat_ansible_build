@@ -8,6 +8,7 @@ import os
 import threading
 import sys
 import ConfigParser
+import myNeCTARClient
 
 def new_pass(length):
     return ''.join(random.choice(string.ascii_uppercase + string.digits+string.ascii_lowercase) for _ in range(length))
@@ -43,6 +44,67 @@ or via your system package manager.
 For Ubuntu you can do sudo apt-get install python-novaclient
 """
         raise Exception(errmsg)
+
+def init_secgroup(nc,name,description):
+    secgroup = nc.security_groups.create(name,description)
+    print secgroup
+    return secgroup
+
+def create_sec_group(nc,name,description,rules):
+    print "initiliing secgroup"
+    secgroup = init_secgroup(nc,name,description)
+    print "inited secgroup"
+    ruleparts={'ip_proto':'protocol','from_port':'port_range_min','to_port':'port_range_max','cidr':'remote_ip_prefix'}
+    for r in rules:
+        rule={}
+        for p in ruleparts.keys():
+            if r[ruleparts[p]]!=None:
+                rule[p]=r[ruleparts[p]]
+            else:
+                rule[p] = None
+        print rule
+        nc.security_group_rules.create(secgroup.id,rule['ip_proto'],int(rule['from_port']),int(rule['to_port']),rule['cidr'])
+        print "adding rule"
+
+def update_sec_group(nc,name,rules):
+    print "updating %s NOT IMPLEMENTED Assume secgroup is already correct"%name
+
+def check_sec_groups(hotfile):
+    # Currently NeCTAR does not support neutron, so sec groups in the main HOT file are impossible, However
+    # we can create secgroups using nova rather than neutron, but we put them in an auxilary HOT file
+    username = os.environ['OS_USERNAME']
+    passwd = os.environ['OS_PASSWORD']
+    nectar=myNeCTARClient.OpenStackConnection(username,passwd)
+    nectar.auth()
+    secgroup_list = nectar.nc.security_groups.list()
+    f = open(hotfile,'r')
+    d=yaml.load(f.read())
+    try:
+        for rname in d['resources'].keys():
+            r=d['resources'][rname]
+            if r['type'] == 'OS::Neutron::SecurityGroup':
+                name=r['properties']['name']
+                try:
+                    description=r['properties']['description']
+                except:
+                    description='no description given'
+                rules=r['properties']['rules']
+                print r
+
+                found=False
+                for s in secgroup_list: 
+                    if s.name == name:
+                        found=True
+                if found:
+                    update_sec_group(nectar.nc,name,rules)
+                else:
+                    print "calling create_sec_group"
+                    create_sec_group(nectar.nc,name,description,rules)
+    except Exception as e:
+        import traceback
+        print e
+        print traceback.format_exc()
+        pass
 
 def check_heat_installed():
     try:
@@ -227,6 +289,10 @@ def main():
         hot_file=config.get('defaults','hot_file')
         playbook=config.get('defaults','playbook')
         reqpasswdstr = config.get('defaults','reqpasswd')
+        try:
+            secgroup_hot_file=config.get('defaults','secgroup_hot_file')
+        except:
+            secgroup_hot_file=None
         import json
         reqpasswd = json.loads(reqpasswdstr)
         try:
@@ -243,19 +309,21 @@ def main():
         check_keystone_vars()
         check_nova_installed()
         check_heat_installed()
-        check_keypairs(hot_file)
-        check_ansible_config()
-        check_ansible_installed()
-        if ldapConfig_file !=None:
-            check_ldap_config(ldapConfig_file)
-        write_names_file(names_file,clustername,domain)
-        write_passwd_file(clustername,reqpasswd,passwd_file)
-        create_or_update_stack(stackname,hot_file)
-        link_inventory(stackname)
-        wait_for_cluster(stackname)
-        print("extra wait")
-        time.sleep(3)
-        run_ansible(os.path.abspath(stackname),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
+        if secgroup_hot_file!=None:
+            check_sec_groups(secgroup_hot_file)
+#        check_keypairs(hot_file)
+#        check_ansible_config()
+#        check_ansible_installed()
+#        if ldapConfig_file !=None:
+#            check_ldap_config(ldapConfig_file)
+#        write_names_file(names_file,clustername,domain)
+#        write_passwd_file(clustername,reqpasswd,passwd_file)
+#        create_or_update_stack(stackname,hot_file)
+#        link_inventory(stackname)
+#        wait_for_cluster(stackname)
+#        print("extra wait")
+#        time.sleep(3)
+#        run_ansible(os.path.abspath(stackname),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
     except Exception as e:
         print traceback.format_exc()
         print e
