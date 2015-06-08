@@ -311,19 +311,19 @@ def main():
         check_heat_installed()
         if secgroup_hot_file!=None:
             check_sec_groups(secgroup_hot_file)
-#        check_keypairs(hot_file)
-#        check_ansible_config()
-#        check_ansible_installed()
-#        if ldapConfig_file !=None:
-#            check_ldap_config(ldapConfig_file)
-#        write_names_file(names_file,clustername,domain)
-#        write_passwd_file(clustername,reqpasswd,passwd_file)
-#        create_or_update_stack(stackname,hot_file)
-#        link_inventory(stackname)
-#        wait_for_cluster(stackname)
-#        print("extra wait")
-#        time.sleep(3)
-#        run_ansible(os.path.abspath(stackname),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
+        check_keypairs(hot_file)
+        check_ansible_config()
+        check_ansible_installed()
+        if ldapConfig_file !=None:
+            check_ldap_config(ldapConfig_file)
+        write_names_file(names_file,clustername,domain)
+        write_passwd_file(clustername,reqpasswd,passwd_file)
+        create_or_update_stack(stackname,hot_file)
+        link_inventory(stackname)
+        wait_for_cluster(stackname)
+        print("extra wait")
+        time.sleep(3)
+        run_ansible(os.path.abspath(stackname),playbook,passwd_file,ldapConfig_file,vars_file,names_file)
     except Exception as e:
         print traceback.format_exc()
         print e
